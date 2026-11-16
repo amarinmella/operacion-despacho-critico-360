@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Operación Despacho Crítico 360° · AndesCargo</title>
+  <meta name="description" content="Simulador educativo estilo Escape Room 3D/360° para 4° Medio TP Administración, Mención Logística.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script type="module" src="js/challenges.js"></script>
+</head>
+<body>
+  <!-- ESCENA 3D -->
+  <div id="scene-container" aria-hidden="true"></div>
+  <div id="hotspot-layer"></div>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="letterbox" aria-hidden="true"><i></i><i></i></div>
+
+  <!-- CARGA -->
+  <div id="loader">
+    <div class="loader-box">
+      <div class="loader-logo">ANDES<span>CARGO</span></div>
+      <div class="loader-bar"><i></i></div>
+      <p id="loader-text">Generando texturas procedurales…</p>
+    </div>
+  </div>
+
+  <!-- HUD SUPERIOR -->
+  <header id="hud" class="glass hidden">
+    <div class="hud-brand">
+      <span class="hud-logo">ANDES<b>CARGO</b></span>
+      <span class="hud-mission">DESPACHO CRÍTICO 360°</span>
+    </div>
+    <div class="hud-stage">
+      <span id="stage-label">ETAPA 1 (0/4)</span>
+      <div class="pips" id="stage-pips"><i></i><i></i><i></i><i></i></div>
+      <span class="hud-zone" id="stage-zone">BODEGA INTERNA</span>
+    </div>
+    <div class="hud-timer" id="timer-box">
+      <small>TIEMPO RESTANTE</small>
+      <span id="timer">15:00</span>
+    </div>
+    <div class="hud-actions">
+      <button class="hud-btn" id="btn-view" title="Vista panorámica 360°"><span>⟳</span> Vista 360°</button>
+      <button class="hud-btn" id="btn-audio" title="Silenciar audio" aria-pressed="false"><span id="audio-icon">🔊</span></button>
+      <button class="hud-btn" id="btn-log" aria-expanded="false"><span>▤</span> Bitácora de Claves</button>
+    </div>
+  </header>
+
+  <!-- BITÁCORA DE CLAVES -->
+  <aside id="logbook" class="glass" hidden>
+    <h3>BITÁCORA DE CLAVES</h3>
+    <div class="log-stage">
+      <h4>ETAPA 1 · BODEGA INTERNA</h4>
+      <ul>
+        <li data-key="1"><span>Clave 1 · Cuadratura</span><b>···</b></li>
+        <li data-key="2"><span>Clave 2 · FIFO</span><b>··</b></li>
+        <li data-key="3"><span>Clave 3 · Transporte</span><b>··</b></li>
+      </ul>
+      <p class="log-code">Código Maestro: <b id="code-1">··· ·· ··</b></p>
+    </div>
+    <div class="log-stage stage2">
+      <h4>ETAPA 2 · PATIO EXTERIOR</h4>
+      <ul>
+        <li data-key="5"><span>Clave E2-1 · Cadena de frío</span><b>··</b></li>
+        <li data-key="6"><span>Clave E2-2 · Clase A</span><b>··</b></li>
+        <li data-key="7"><span>Clave E2-3 · Protocolo</span><b>··</b></li>
+      </ul>
+      <p class="log-code">Código de Salida: <b id="code-2">·· ·· ··</b></p>
+    </div>
+    <div class="log-stage stage3" hidden>
+      <h4>ETAPA 3 · CIERRE DE TURNO</h4>
+      <ul>
+        <li data-key="9"><span>Clave E3-1 · Conteo</span><b>··</b></li>
+        <li data-key="10"><span>Clave E3-2 · Ubicación</span><b>··</b></li>
+        <li data-key="11"><span>Clave E3-3 · Cubicaje</span><b>··</b></li>
+      </ul>
+      <p class="log-code">Código de Cierre: <b id="code-3">·· ·· ··</b></p>
+    </div>
+    <div class="log-stage stage4" hidden>
+      <h4>ETAPA 4 · CENTRO DE CONTROL</h4>
+      <ul>
+        <li data-key="13"><span>Clave E4-1 · Lectura RF</span><b>··</b></li>
+        <li data-key="14"><span>Clave E4-2 · Transacción</span><b>··</b></li>
+        <li data-key="15"><span>Clave E4-3 · Servicio</span><b>··</b></li>
+      </ul>
+      <p class="log-code">Código de Control: <b id="code-4">·· ·· ··</b></p>
+    </div>
+  </aside>
+
+  <div id="hint-bar" class="glass hidden">Arrastra para mirar en 360° · Toca un marcador para abrir la estación</div>
+  <div id="toast" class="glass" role="status" aria-live="polite"></div>
+  <div id="penalty-layer" aria-hidden="true"></div>
+  <div id="fader" aria-hidden="true"></div>
+
+  <!-- BIENVENIDA -->
+  <section id="welcome-screen" class="overlay">
+    <div class="welcome-card glass">
+      <p class="eyebrow">SIMULADOR LOGÍSTICO · 4° MEDIO TP ADMINISTRACIÓN</p>
+      <h1>OPERACIÓN<br><span>DESPACHO CRÍTICO</span> <em>360°</em></h1>
+      <p class="edition">EDICIÓN MULTI-ETAPA PROGRESIVA</p>
+      <div class="briefing">
+        <p><b>Viernes 17:45 hrs.</b> Bloqueo de seguridad en <b>AndesCargo</b>. Un despacho médico crítico espera en el andén y el sistema no liberará el portón sin tu auditoría.</p>
+        <p>Tienes <b class="t-amber">15:00 minutos</b> para liberar el andén y despachar el Camión Flota 72. Cada error cuesta <b class="t-red">−15 segundos</b>.</p>
+      </div>
+      <div class="stage-preview">
+        <div><b>ETAPA 1</b><span>Bodega Interna</span><small>Cuadratura · FIFO · Cubicaje · Portón</small></div>
+        <i>→</i>
+        <div class="s2"><b>ETAPA 2</b><span>Patio de Embarque</span><small>Cadena de frío · ABC · EPP · Despacho</small></div>
+      </div>
+      <form id="welcome-form" onsubmit="return false;" autocomplete="off">
+        <label>Nombre del estudiante
+          <input type="text" id="player-name" required minlength="3" maxlength="48" placeholder="Nombre y apellido">
+        </label>
+        <label>Curso
+          <input type="text" id="player-course" required maxlength="24" placeholder="Ej. 4° Medio A">
+        </label>
+        <div class="mode-select" role="radiogroup" aria-label="Duración de la misión">
+          <label class="mode-card"><input type="radio" name="mode" value="2"><b>MISIÓN CORTA</b><span>Etapas 1 y 2 · 8 estaciones</span><small>15 minutos</small></label>
+          <label class="mode-card"><input type="radio" name="mode" value="3"><b>MISIÓN EXTENDIDA</b><span>Etapas 1 a 3 · 12 estaciones</span><small>25 minutos</small></label>
+          <label class="mode-card"><input type="radio" name="mode" value="4" checked><b>MISIÓN COMPLETA</b><span>Etapas 1 a 4 · 16 estaciones</span><small>35 minutos</small></label>
+        </div>
+        <button type="submit" class="btn primary big" id="btn-start" disabled>INICIAR ETAPA 1: BODEGA INTERNA</button>
+      </form>
+      <p class="credits">Especialidad Administración · Mención Logística<br>Desarrollado por <b>Innova IA Studio</b> · con Fable 5.2 · <a href="https://www.innovaiastudio.com" target="_blank" rel="noopener">innovaiastudio.com</a></p>
+    </div>
+  </section>
+
+  <!-- TRANSICIÓN A ETAPA 2 -->
+  <section id="stage2-modal" class="overlay hidden">
+    <div class="welcome-card glass narrow">
+      <p class="eyebrow t-green">✓ ANDÉN 01 LIBERADO</p>
+      <h2>ETAPA 2<br><span>PATIO DE EMBARQUE EXTERIOR</span></h2>
+      <div class="briefing">
+        <p>El portón está abierto, pero el camión aún no puede salir. En el patio hay <b>cuatro controles pendientes</b> antes del despacho:</p>
+        <ul class="brief-list">
+          <li><b>05</b> Contenedor Reefer — Cadena de frío MINSAL</li>
+          <li><b>06</b> Kiosco de patio — Clasificación ABC (Pareto 80/20)</li>
+          <li><b>07</b> Grúa horquilla — EPP y rotulación NCh 2190</li>
+          <li><b>08</b> Consola Flota 72 — Código de salida de 6 dígitos</li>
+        </ul>
+        <p>El cronómetro se reanuda cuando inicies. Tiempo disponible: <b class="t-amber" id="stage2-time">--:--</b></p>
+      </div>
+      <button class="btn primary big" id="btn-stage2">INICIAR ETAPA 2: PATIO EXTERIOR</button>
+    </div>
+  </section>
+
+  <!-- TRANSICIÓN A ETAPA 3 -->
+  <section id="stage3-modal" class="overlay hidden">
+    <div class="welcome-card glass narrow">
+      <p class="eyebrow t-green">✓ CAMIÓN FLOTA 72 EN RUTA</p>
+      <h2>ETAPA 3<br><span>CIERRE DE TURNO</span></h2>
+      <div class="briefing">
+        <p><b>18:30 hrs.</b> El despacho salió, pero el sistema marca una diferencia de stock. La bodega no puede cerrar el turno sin cuadrar el inventario:</p>
+        <ul class="brief-list">
+          <li><b>09</b> Rack oeste — Conteo cíclico e informe de stock</li>
+          <li><b>10</b> Rack Zona A — Ubicaciones y sistema de localización</li>
+          <li><b>11</b> Rack de reposición — Layout y cubicaje del hueco</li>
+          <li><b>12</b> Tótem de cierre — Código de 6 dígitos</li>
+        </ul>
+        <p>Se suman <b class="t-amber">+10:00 minutos</b> al cronómetro. Tiempo disponible: <b class="t-amber" id="stage3-time">--:--</b></p>
+      </div>
+      <button class="btn primary big" id="btn-stage3">INICIAR ETAPA 3: CIERRE DE TURNO</button>
+    </div>
+  </section>
+
+  <!-- TRANSICIÓN A ETAPA 4 -->
+  <section id="stage4-modal" class="overlay hidden">
+    <div class="welcome-card glass narrow">
+      <p class="eyebrow t-green">✓ INVENTARIO CUADRADO</p>
+      <h2>ETAPA 4<br><span>CENTRO DE CONTROL RF</span></h2>
+      <div class="briefing">
+        <p><b>18:50 hrs.</b> El hospital pide confirmación del despacho y jefatura quiere el reporte de la semana. Falta informar y comunicar los datos por sistema:</p>
+        <ul class="brief-list">
+          <li><b>13</b> Lector RF — Verificar pallets contra la orden</li>
+          <li><b>14</b> Terminal WMS — Registrar la salida paso a paso</li>
+          <li><b>15</b> Panel KPI — Calcular el nivel de servicio</li>
+          <li><b>16</b> Consola de control — Código de 6 dígitos</li>
+        </ul>
+        <p>Se suman <b class="t-amber">+10:00 minutos</b> al cronómetro. Tiempo disponible: <b class="t-amber" id="stage4-time">--:--</b></p>
+      </div>
+      <button class="btn primary big" id="btn-stage4">INICIAR ETAPA 4: CENTRO DE CONTROL</button>
+    </div>
+  </section>
+
+  <!-- ============ MODALES DE DESAFÍOS ============ -->
+
+  <!-- ESTACIÓN 01 -->
+  <section class="modal" id="modal-1" data-station="1" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 01</span>
+        <div><h2>Escritorio de Control</h2><p>Cuadratura documental · OC #884 vs. Guía de Despacho</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">El proveedor <b>MedSur Insumos Clínicos SpA</b> entregó la mercadería. Compara lo <b>solicitado</b> en la Orden de Compra con lo <b>despachado</b> en la Guía, selecciona la línea con discrepancia e indica cuántas unidades faltan.</p>
+        <div class="doc-grid">
+          <div class="doc">
+            <h4>ORDEN DE COMPRA #884</h4>
+            <table class="doc-table" data-doc="oc">
+              <thead><tr><th>SKU</th><th>Descripción</th><th>Solicitado</th></tr></thead>
+              <tbody>
+                <tr data-sku="112"><td>112</td><td>Mascarillas N95 (caja x20)</td><td>120</td></tr>
+                <tr data-sku="245"><td>245</td><td>Jeringas 5 ml (caja x100)</td><td>200</td></tr>
+                <tr data-sku="408"><td>408</td><td>Cajas de Guantes Quirúrgicos Estériles</td><td>50</td></tr>
+                <tr data-sku="517"><td>517</td><td>Suero fisiológico 500 ml</td><td>80</td></tr>
+                <tr data-sku="633"><td>633</td><td>Alcohol gel 1 L</td><td>60</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="doc">
+            <h4>GUÍA DE DESPACHO ELECTRÓNICA N° 20.417</h4>
+            <table class="doc-table" data-doc="guia">
+              <thead><tr><th>SKU</th><th>Descripción</th><th>Despachado</th></tr></thead>
+              <tbody>
+                <tr data-sku="112"><td>112</td><td>Mascarillas N95 (caja x20)</td><td>120</td></tr>
+                <tr data-sku="245"><td>245</td><td>Jeringas 5 ml (caja x100)</td><td>200</td></tr>
+                <tr data-sku="408"><td>408</td><td>Cajas de Guantes Quirúrgicos Estériles</td><td>35</td></tr>
+                <tr data-sku="517"><td>517</td><td>Suero fisiológico 500 ml</td><td>80</td></tr>
+                <tr data-sku="633"><td>633</td><td>Alcohol gel 1 L</td><td>60</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="inline-form">
+          <span>SKU seleccionado: <b id="sku-selected">—</b></span>
+          <label>Unidades faltantes <input type="number" id="diff-input" min="0" max="999" inputmode="numeric" placeholder="0"></label>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Validar cuadratura</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 02 -->
+  <section class="modal" id="modal-2" data-station="2" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 02</span>
+        <div><h2>Rack Zona A</h2><p>Rotación de inventario · Método FIFO / PEPS</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Hay tres pallets de <b>Suero fisiológico 500 ml</b> en el nivel de picking. El pedido requiere retirar <b>uno</b>. Aplica el método <b>FIFO (First In, First Out) / PEPS</b> y selecciona el lote que debe salir primero.</p>
+        <div class="opt-group cards-3">
+          <button class="opt-card" data-value="14"><span class="oc-icon">▦</span><b>LOTE #14</b><small>Fecha de ingreso</small><strong>15/10/2026</strong><em>Ubicación A-03-1</em></button>
+          <button class="opt-card" data-value="19"><span class="oc-icon">▦</span><b>LOTE #19</b><small>Fecha de ingreso</small><strong>02/09/2026</strong><em>Ubicación A-04-1</em></button>
+          <button class="opt-card" data-value="22"><span class="oc-icon">▦</span><b>LOTE #22</b><small>Fecha de ingreso</small><strong>05/11/2026</strong><em>Ubicación A-05-1</em></button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Confirmar lote</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 03 -->
+  <section class="modal" id="modal-3" data-station="3" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 03</span>
+        <div><h2>Zona de Paletizado · Tablet TMS</h2><p>Cubicaje y selección de transporte</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="order-strip">
+          <div><small>PEDIDO CONSOLIDADO</small><b>1.450 kg</b></div>
+          <div><small>UNIDADES DE CARGA</small><b>12 pallets</b></div>
+          <div><small>DESTINO</small><b>Hospital Regional</b></div>
+        </div>
+        <p class="situation">Elige el vehículo que transporta <b>toda</b> la carga sin sobrepasar su capacidad y con el <b>mejor aprovechamiento</b> (menor capacidad ociosa).</p>
+        <div class="opt-group cards-3">
+          <button class="opt-card" data-value="31"><span class="oc-icon">🚐</span><b>FURGÓN URBANO</b><small>Flota 31</small><strong>1.000 kg</strong><em>6 pallets</em></button>
+          <button class="opt-card" data-value="72"><span class="oc-icon">🚚</span><b>CAMIÓN 3/4</b><small>Flota 72</small><strong>2.500 kg</strong><em>14 pallets</em></button>
+          <button class="opt-card" data-value="95"><span class="oc-icon">🚛</span><b>TRACTOCAMIÓN</b><small>Flota 95</small><strong>18.000 kg</strong><em>28 pallets</em></button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Asignar vehículo</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 04 -->
+  <section class="modal" id="modal-4" data-station="4" aria-hidden="true" role="dialog">
+    <div class="modal-card glass keypad-card">
+      <header class="modal-head">
+        <span class="st-badge">EST. 04</span>
+        <div><h2>Panel del Portón · Andén 01</h2><p>Código Maestro de 7 dígitos</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Une las tres claves de la bodega <b>en el orden de las estaciones</b> (01 → 02 → 03) para liberar el portón.</p>
+        <div class="key-slots" data-slots="1,2,3"></div>
+        <div class="keypad" data-length="7"></div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot"><button class="btn ghost" data-close>Volver a la bodega</button></footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 05 -->
+  <section class="modal stage2" id="modal-5" data-station="5" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 05</span>
+        <div><h2>Contenedor Reefer Bio-Médico</h2><p>Cadena de frío · Norma MINSAL / OMS</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <div class="thermo">
+          <div class="thermo-read"><small>TERMÓGRAFO EXTERIOR</small><b>11.4 °C</b><span>⚠ ALERTA TÉRMICA</span></div>
+          <p>El contenedor transporta <b>vacunas y sueros termosensibles</b>. Reprograma el equipo seleccionando el rango de conservación que exige la norma para productos <b>refrigerados</b>.</p>
+        </div>
+        <div class="opt-group cards-3">
+          <button class="opt-card" data-value="-20"><span class="oc-icon">❄</span><b>CONGELACIÓN</b><small>Rango</small><strong>−25 °C a −15 °C</strong><em>Set-point −20 °C</em></button>
+          <button class="opt-card" data-value="04"><span class="oc-icon">🌡</span><b>REFRIGERACIÓN</b><small>Rango</small><strong>+2 °C a +8 °C</strong><em>Set-point 04 °C</em></button>
+          <button class="opt-card" data-value="20"><span class="oc-icon">☀</span><b>AMBIENTE CONTROLADO</b><small>Rango</small><strong>+15 °C a +25 °C</strong><em>Set-point 20 °C</em></button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver al patio</button>
+        <button class="btn primary" data-validate>Programar set-point</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 06 -->
+  <section class="modal stage2" id="modal-6" data-station="6" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 06</span>
+        <div><h2>Terminal Kiosco de Patio</h2><p>Clasificación ABC · Ley de Pareto 80/20</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Tres familias de productos esperan embarque. La <b>Clase A</b> exige el control más estricto (conteo cíclico frecuente y resguardo). Identifica cuál es la familia <b>Clase A</b>.</p>
+        <div class="opt-group abc-list">
+          <button class="opt-card row" data-value="C05">
+            <b>SERIE C05</b><span>Material de embalaje y aseo</span>
+            <div class="bars"><i style="--w:55%" class="vol"></i><small>55% de los bultos</small><i style="--w:5%" class="val"></i><small>5% del valor anual</small></div>
+          </button>
+          <button class="opt-card row" data-value="A80">
+            <b>SERIE A80</b><span>Monitores UCI</span>
+            <div class="bars"><i style="--w:15%" class="vol"></i><small>15% de los bultos</small><i style="--w:80%" class="val"></i><small>80% del valor anual</small></div>
+          </button>
+          <button class="opt-card row" data-value="B15">
+            <b>SERIE B15</b><span>Insumos de curación</span>
+            <div class="bars"><i style="--w:30%" class="vol"></i><small>30% de los bultos</small><i style="--w:15%" class="val"></i><small>15% del valor anual</small></div>
+          </button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver al patio</button>
+        <button class="btn primary" data-validate>Clasificar como Clase A</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 07 -->
+  <section class="modal stage2" id="modal-7" data-station="7" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 07</span>
+        <div><h2>Grúa Horquilla de Patio</h2><p>Seguridad EPP · Ley 16.744 / D.S. 594 · Rotulación NCh 2190</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Debes cargar bidones de <b>Alcohol Isopropílico Clínico al 70%</b> con la grúa horquilla. Selecciona el protocolo que cumple la normativa de prevención de riesgos y de rotulación de sustancias peligrosas.</p>
+        <div class="opt-group cards-3 protocols">
+          <button class="opt-card" data-value="23">
+            <b>PROTOCOLO #23</b>
+            <ul><li>Casco y chaleco reflectante</li><li>Cinturón opcional en trayectos cortos</li><li>Horquillas elevadas a 1 m para ver mejor</li><li>Máx. 10 km/h</li><li>Rombo verde Clase 2 · Gas no inflamable</li></ul>
+          </button>
+          <button class="opt-card" data-value="59">
+            <b>PROTOCOLO #59</b>
+            <ul><li>Casco, calzado de seguridad y chaleco reflectante</li><li>Cinturón de seguridad abrochado</li><li>Horquillas a 15–20 cm del suelo</li><li>Máx. 10 km/h</li><li>Rombo rojo Clase 3 · Líquido inflamable + marca Frágil</li></ul>
+          </button>
+          <button class="opt-card" data-value="41">
+            <b>PROTOCOLO #41</b>
+            <ul><li>Casco, calzado de seguridad y chaleco</li><li>Cinturón de seguridad abrochado</li><li>Horquillas a 15–20 cm del suelo</li><li>Máx. 20 km/h para ganar tiempo</li><li>Sin rótulo: el alcohol clínico no es peligroso</li></ul>
+          </button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver al patio</button>
+        <button class="btn primary" data-validate>Aplicar protocolo</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 08 -->
+  <section class="modal stage2" id="modal-8" data-station="8" aria-hidden="true" role="dialog">
+    <div class="modal-card glass keypad-card">
+      <header class="modal-head">
+        <span class="st-badge">EST. 08</span>
+        <div><h2>Consola de Salida · Flota 72</h2><p>Código de Embarque de 6 dígitos</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Une las tres claves del patio <b>en el orden de las estaciones</b> (05 → 06 → 07) para despachar el Camión 3/4.</p>
+        <div class="key-slots" data-slots="5,6,7"></div>
+        <div class="keypad" data-length="6"></div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot"><button class="btn ghost" data-close>Volver al patio</button></footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 09 -->
+  <section class="modal stage3" id="modal-9" data-station="9" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 09</span>
+        <div><h2>Conteo Cíclico</h2><p>Informe de stock · Sistema vs. conteo físico</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">El WMS registra un saldo de <b>340 cajas</b> del SKU 517 (Suero fisiológico 500 ml). Recorriste las tres ubicaciones y anotaste el conteo físico. Completa el informe de stock.</p>
+        <div class="doc">
+          <h4>HOJA DE CONTEO CÍCLICO · SKU 517</h4>
+          <table class="doc-table static">
+            <thead><tr><th>Ubicación</th><th>Lote</th><th>Cajas contadas</th></tr></thead>
+            <tbody>
+              <tr><td>A-03-1</td><td>Lote #14</td><td>120</td></tr>
+              <tr><td>A-04-1</td><td>Lote #19</td><td>96</td></tr>
+              <tr><td>A-05-1</td><td>Lote #22</td><td>97</td></tr>
+              <tr class="total"><td colspan="2">Saldo según sistema (WMS)</td><td>340</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="report-form">
+          <label>Total conteo físico <input type="number" id="count-total" inputmode="numeric" placeholder="0"></label>
+          <label>Diferencia (cajas) <input type="number" id="count-diff" inputmode="numeric" placeholder="0"></label>
+        </div>
+        <div class="opt-group cards-2">
+          <button class="opt-card" data-value="sobrante"><b>SOBRANTE</b><em>Hay más stock físico que en el sistema</em></button>
+          <button class="opt-card" data-value="faltante"><b>FALTANTE</b><em>Hay menos stock físico que en el sistema</em></button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Emitir informe de stock</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 10 -->
+  <section class="modal stage3" id="modal-10" data-station="10" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 10</span>
+        <div><h2>Ubicaciones · WMS</h2><p>Sistema de localización · Pasillo – Rack – Nivel</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">El WMS asignó la ubicación <b class="loc-code">A-06-3</b> al pallet de repuesto de Monitores UCI. El código se lee <b>PASILLO – RACK – NIVEL</b>. Marca en el plano la posición donde debe quedar el pallet.</p>
+        <div class="aisle-tabs">
+          <button type="button" class="aisle-tab selected" data-aisle="B">PASILLO B</button>
+          <button type="button" class="aisle-tab" data-aisle="A">PASILLO A</button>
+        </div>
+        <div class="loc-grid" id="loc-grid"></div>
+        <p class="loc-picked">Posición marcada: <b id="loc-picked">—</b></p>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Confirmar ubicación</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 11 -->
+  <section class="modal stage3" id="modal-11" data-station="11" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 11</span>
+        <div><h2>Rack de Reposición R-11</h2><p>Layout por peso y rotación · Cubicaje del hueco</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation"><b>Parte 1.</b> Asigna cada producto a un nivel distinto del rack, considerando su <b>peso</b> y su <b>rotación</b>.</p>
+        <div class="assign-list">
+          <div class="assign-row">
+            <div><b>Bidones de suero 20 L</b><small>22 kg por bidón · rotación media</small></div>
+            <select data-product="bidones"><option value="">Elegir nivel…</option><option value="alto">Nivel alto</option><option value="medio">Nivel medio · picking</option><option value="piso">Nivel piso</option></select>
+          </div>
+          <div class="assign-row">
+            <div><b>Guantes quirúrgicos</b><small>4 kg por caja · rotación alta (salen a diario)</small></div>
+            <select data-product="guantes"><option value="">Elegir nivel…</option><option value="alto">Nivel alto</option><option value="medio">Nivel medio · picking</option><option value="piso">Nivel piso</option></select>
+          </div>
+          <div class="assign-row">
+            <div><b>Repuestos de monitores</b><small>3 kg por caja · rotación baja (una vez al mes)</small></div>
+            <select data-product="repuestos"><option value="">Elegir nivel…</option><option value="alto">Nivel alto</option><option value="medio">Nivel medio · picking</option><option value="piso">Nivel piso</option></select>
+          </div>
+        </div>
+        <p class="situation"><b>Parte 2.</b> Cada hueco del rack mide <b>2,4 m × 1,2 m × 1,2 m</b> (frente × fondo × alto). Las cajas de guantes miden <b>0,6 m × 0,4 m × 0,4 m</b> y se apilan sin girarlas. ¿Cuántas cajas caben en un hueco?</p>
+        <div class="inline-form">
+          <span>Cubicaje del hueco</span>
+          <label>Cajas por hueco <input type="number" id="cube-input" min="0" max="999" inputmode="numeric" placeholder="0"></label>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Validar layout y cubicaje</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 12 -->
+  <section class="modal stage3" id="modal-12" data-station="12" aria-hidden="true" role="dialog">
+    <div class="modal-card glass keypad-card">
+      <header class="modal-head">
+        <span class="st-badge">EST. 12</span>
+        <div><h2>Tótem de Cierre de Turno</h2><p>Código de Cierre de 6 dígitos</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Une las tres claves del cierre <b>en el orden de las estaciones</b> (09 → 10 → 11) para cuadrar el inventario y cerrar el turno.</p>
+        <div class="key-slots" data-slots="9,10,11"></div>
+        <div class="keypad" data-length="6"></div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot"><button class="btn ghost" data-close>Volver a la bodega</button></footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 13 -->
+  <section class="modal stage4" id="modal-13" data-station="13" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 13</span>
+        <div><h2>Lector de Radiofrecuencia</h2><p>Verificación de pallets contra la orden de despacho</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Quedan cinco pallets preparados para el segundo viaje al <b>Hospital Regional</b>. Escanea cada etiqueta con el lector RF, compárala con la orden y marca el pallet <b>no conforme</b> para informarlo al sistema.</p>
+        <div class="doc">
+          <h4>ORDEN DE DESPACHO OD-2217 · DESTINO: HOSPITAL REGIONAL</h4>
+          <table class="doc-table static">
+            <thead><tr><th>SKU</th><th>Producto</th><th>Lote exigido</th></tr></thead>
+            <tbody>
+              <tr><td>408</td><td>Guantes quirúrgicos estériles</td><td>#31</td></tr>
+              <tr><td>517</td><td>Suero fisiológico 500 ml (2 pallets)</td><td>#19</td></tr>
+              <tr><td>245</td><td>Jeringas 5 ml</td><td>#08</td></tr>
+              <tr><td>112</td><td>Mascarillas N95</td><td>#45</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="scan-list" id="scan-list"></div>
+        <p class="loc-picked">Toca un pallet para escanearlo. Toca uno ya leído para marcarlo como no conforme: <b id="scan-picked">—</b></p>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Informar no conformidad</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 14 -->
+  <section class="modal stage4" id="modal-14" data-station="14" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 14</span>
+        <div><h2>Terminal WMS</h2><p>Comunicar la salida de productos por radiofrecuencia</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Para que la salida quede comunicada al sistema, la transacción RF debe seguir el procedimiento establecido. <b>Ordena los cinco pasos</b> desde el primero hasta el último con las flechas.</p>
+        <ol class="order-list" id="order-list"></ol>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Confirmar transacción</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 15 -->
+  <section class="modal stage4" id="modal-15" data-station="15" aria-hidden="true" role="dialog">
+    <div class="modal-card glass">
+      <header class="modal-head">
+        <span class="st-badge">EST. 15</span>
+        <div><h2>Panel de Indicadores</h2><p>Nivel de servicio · Pedidos completos y a tiempo</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Jefatura pide el <b>nivel de servicio</b> de la semana: el porcentaje de pedidos que salieron <b>completos y a tiempo</b>. La meta de AndesCargo es <b>95%</b>.</p>
+        <div class="doc">
+          <h4>REGISTRO DE DESPACHOS · SEMANA 46</h4>
+          <table class="doc-table static">
+            <thead><tr><th>Día</th><th>Pedidos despachados</th><th>Completos y a tiempo</th></tr></thead>
+            <tbody>
+              <tr><td>Lunes</td><td>8</td><td>8</td></tr>
+              <tr><td>Martes</td><td>9</td><td>8</td></tr>
+              <tr><td>Miércoles</td><td>7</td><td>6</td></tr>
+              <tr><td>Jueves</td><td>8</td><td>7</td></tr>
+              <tr><td>Viernes</td><td>8</td><td>7</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="report-form three">
+          <label>Total despachados <input type="number" id="kpi-total" inputmode="numeric" placeholder="0"></label>
+          <label>Completos y a tiempo <input type="number" id="kpi-ok" inputmode="numeric" placeholder="0"></label>
+          <label>Nivel de servicio (%) <input type="number" id="kpi-pct" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <div class="opt-group cards-2">
+          <button class="opt-card" data-value="cumple"><b>CUMPLE LA META</b><em>El resultado alcanza o supera el 95%</em></button>
+          <button class="opt-card" data-value="bajo"><b>BAJO LA META</b><em>El resultado no alcanza el 95%</em></button>
+        </div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot">
+        <button class="btn ghost" data-close>Volver a la bodega</button>
+        <button class="btn primary" data-validate>Informar a jefatura</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ESTACIÓN 16 -->
+  <section class="modal stage4" id="modal-16" data-station="16" aria-hidden="true" role="dialog">
+    <div class="modal-card glass keypad-card">
+      <header class="modal-head">
+        <span class="st-badge">EST. 16</span>
+        <div><h2>Consola de Control RF</h2><p>Código de Control de 6 dígitos</p></div>
+        <button class="modal-close" data-close aria-label="Cerrar">✕</button>
+      </header>
+      <div class="modal-body">
+        <p class="situation">Une las tres claves del centro de control <b>en el orden de las estaciones</b> (13 → 14 → 15) para enviar el reporte final.</p>
+        <div class="key-slots" data-slots="13,14,15"></div>
+        <div class="keypad" data-length="6"></div>
+      </div>
+      <div class="feedback" data-feedback></div>
+      <footer class="modal-foot"><button class="btn ghost" data-close>Volver a la bodega</button></footer>
+    </div>
+  </section>
+
+  <!-- VICTORIA -->
+  <section id="victory-screen" class="overlay hidden">
+    <canvas id="confetti" aria-hidden="true"></canvas>
+    <div class="welcome-card glass victory">
+      <p class="eyebrow t-green" id="v-eyebrow">✓ DESPACHO MÉDICO EN RUTA · RUTA 5 SUR</p>
+      <h2>MISIÓN <span>CUMPLIDA</span></h2>
+      <p class="v-name"><b id="v-name">—</b> · <span id="v-course">—</span></p>
+      <div class="stats">
+        <div><small>TIEMPO EMPLEADO</small><b id="v-time">--:--</b></div>
+        <div><small>EFICIENCIA OPERATIVA</small><b id="v-eff">--%</b></div>
+        <div><small>ERRORES</small><b id="v-err">0</b></div>
+      </div>
+      <div class="rank"><small>RANGO OBTENIDO</small><b id="v-rank">—</b></div>
+      <div class="v-actions">
+        <button class="btn primary big" id="btn-cert">⬇ Descargar Certificado Oficial (PNG)</button>
+        <button class="btn ghost" id="btn-replay">Jugar de nuevo</button>
+      </div>
+      <img id="cert-preview" alt="Vista previa del certificado" hidden>
+      <p class="credits">Desarrollado por <b>Innova IA Studio</b> · con Fable 5.2 · <a href="https://www.innovaiastudio.com" target="_blank" rel="noopener">innovaiastudio.com</a></p>
+    </div>
+  </section>
+
+  <!-- TIEMPO AGOTADO -->
+  <section id="timeout-screen" class="overlay hidden">
+    <div class="welcome-card glass narrow">
+      <p class="eyebrow t-red">✕ TIEMPO AGOTADO</p>
+      <h2>DESPACHO <span class="t-red">NO LIBERADO</span></h2>
+      <div class="briefing">
+        <p>El camión no alcanzó a salir y el despacho médico quedó retenido. Avanzaste hasta: <b id="to-progress">—</b>.</p>
+        <p>En logística, cada error documental o de seguridad cuesta tiempo real. Revisa las pistas formativas y vuelve a intentarlo.</p>
+      </div>
+      <button class="btn primary big" id="btn-retry">REINTENTAR MISIÓN</button>
+    </div>
+  </section>
+</body>
+</html>
