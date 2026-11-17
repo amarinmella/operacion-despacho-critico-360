@@ -404,19 +404,13 @@ class ChallengeManager {
     }));
     $('#diff-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.validate(1); });
 
-    // Salir de la misión: pausa el cronómetro mientras se confirma
+    // Salir de la misión: el cronómetro sigue corriendo mientras se confirma,
+    // para que el aviso no sirva como pausa
     const exitM = $('#exit-modal');
-    const closeExit = () => {
-      if (exitM.classList.contains('hidden')) return;
-      exitM.classList.add('hidden');
-      if (this._exitWasRunning) this.running = true;
-      this._exitWasRunning = false;
-    };
+    const closeExit = () => exitM.classList.add('hidden');
     $('#btn-exit').addEventListener('click', () => {
       if (!exitM.classList.contains('hidden')) return;
       audio.click();
-      this._exitWasRunning = this.running;
-      this.running = false;
       exitM.classList.remove('hidden');
       $('#btn-exit-cancel').focus();
     });
@@ -828,6 +822,7 @@ class ChallengeManager {
   }
 
   timeout() {
+    $('#exit-modal').classList.add('hidden'); // si el tiempo se agota con el aviso de salida abierto
     this.finished = true;
     this.running = false;
     this.timeLeft = 0;
