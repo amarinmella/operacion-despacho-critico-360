@@ -282,10 +282,9 @@ class ChallengeManager {
   _bindUI() {
     const form = $('#welcome-form');
     const nameI = $('#player-name'), courseI = $('#player-course'), startB = $('#btn-start');
-    try {
-      nameI.value = localStorage.getItem('odc_name') || '';
-      courseI.value = localStorage.getItem('odc_course') || '';
-    } catch { /* almacenamiento no disponible */ }
+    // Los equipos del liceo son compartidos: el nombre no se recuerda entre partidas.
+    // Se borra lo que versiones anteriores dejaron guardado en este navegador.
+    try { localStorage.removeItem('odc_name'); localStorage.removeItem('odc_course'); } catch { /* almacenamiento no disponible */ }
     const valid = () => (startB.disabled = !(nameI.value.trim().length >= 3 && courseI.value.trim().length >= 2));
     nameI.addEventListener('input', valid);
     courseI.addEventListener('input', valid);
@@ -493,7 +492,6 @@ class ChallengeManager {
     this.lastStage = Math.min(4, Math.max(2, +mode || 2));
     $('.log-stage.stage3').hidden = this.lastStage < 3;
     $('.log-stage.stage4').hidden = this.lastStage < 4;
-    try { localStorage.setItem('odc_name', name); localStorage.setItem('odc_course', course); } catch { /* sin almacenamiento */ }
     audio.init();
     audio.whoosh();
     $('#welcome-screen').classList.add('hidden');
