@@ -295,7 +295,19 @@ class ChallengeManager {
       if (startB.disabled) return;
       this.start(nameI.value.trim(), courseI.value.trim(), $('input[name="mode"]:checked').value);
     });
-    $$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => audio.click()));
+    // Las tarjetas de etapa y la nota de tiempo siguen al modo elegido
+    const NOTES = {
+      2: 'Misión corta: 15:00 en total.',
+      3: 'Empiezas con 15:00. Al iniciar la Etapa 3 se suman 10:00 (total 25:00).',
+      4: 'Empiezas con 15:00. Al iniciar la Etapa 3 y la Etapa 4 se suman 10:00 cada una (total 35:00).',
+    };
+    const syncMode = () => {
+      const m = +$('input[name="mode"]:checked').value;
+      $$('#stage-preview > div').forEach((d) => d.classList.toggle('off', +d.dataset.stage > m));
+      $('#mode-note').textContent = NOTES[m];
+    };
+    $$('input[name="mode"]').forEach((r) => r.addEventListener('change', () => { audio.click(); syncMode(); }));
+    syncMode();
 
     // Estación 10: plano de ubicaciones (pasillo – rack – nivel)
     const grid = $('#loc-grid');

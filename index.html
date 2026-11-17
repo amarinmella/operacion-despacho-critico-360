@@ -130,11 +130,13 @@
         <p><b>Viernes 17:45 hrs.</b> Bloqueo de seguridad en <b>AndesCargo</b>. Un despacho médico crítico espera en el andén y el sistema no liberará el portón sin tu auditoría.</p>
         <p>Tienes <b class="t-amber">15:00 minutos</b> para liberar el andén y despachar el Camión Flota 72. Cada error cuesta <b class="t-red">−15 segundos</b>.</p>
       </div>
-      <div class="stage-preview">
-        <div><b>ETAPA 1</b><span>Bodega Interna</span><small>Cuadratura · FIFO · Cubicaje · Portón</small></div>
-        <i>→</i>
-        <div class="s2"><b>ETAPA 2</b><span>Patio de Embarque</span><small>Cadena de frío · ABC · EPP · Despacho</small></div>
+      <div class="stage-preview" id="stage-preview">
+        <div data-stage="1"><b>ETAPA 1</b><span>Bodega Interna</span><small>Cuadratura · FIFO · Cubicaje · Portón</small></div>
+        <div class="s2" data-stage="2"><b>ETAPA 2</b><span>Patio de Embarque</span><small>Cadena de frío · ABC · EPP · Despacho</small></div>
+        <div class="s3" data-stage="3"><b>ETAPA 3</b><span>Cierre de Turno</span><small>Conteo · Ubicación · Layout · Cierre</small></div>
+        <div class="s4" data-stage="4"><b>ETAPA 4</b><span>Centro de Control</span><small>Radiofrecuencia · WMS · Servicio</small></div>
       </div>
+      <p class="mode-note" id="mode-note"></p>
       <form id="welcome-form" onsubmit="return false;" autocomplete="off">
         <label>Nombre del estudiante
           <input type="text" id="player-name" required minlength="3" maxlength="48" placeholder="Nombre y apellido">
@@ -147,7 +149,7 @@
           <label class="mode-card"><input type="radio" name="mode" value="3"><b>MISIÓN EXTENDIDA</b><span>Etapas 1 a 3 · 12 estaciones</span><small>25 minutos</small></label>
           <label class="mode-card"><input type="radio" name="mode" value="4" checked><b>MISIÓN COMPLETA</b><span>Etapas 1 a 4 · 16 estaciones</span><small>35 minutos</small></label>
         </div>
-        <button type="submit" class="btn primary big" id="btn-start" disabled>INICIAR ETAPA 1: BODEGA INTERNA</button>
+        <div class="start-bar"><button type="submit" class="btn primary big" id="btn-start" disabled>INICIAR ETAPA 1: BODEGA INTERNA</button></div>
       </form>
       <p class="credits">Especialidad Administración · Mención Logística<br>Desarrollado por <b>Innova IA Studio</b> · con Fable 5.2 · <a href="https://www.innovaiastudio.com" target="_blank" rel="noopener">innovaiastudio.com</a></p>
     </div>
