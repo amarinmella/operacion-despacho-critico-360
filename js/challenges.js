@@ -404,6 +404,28 @@ class ChallengeManager {
     }));
     $('#diff-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.validate(1); });
 
+    // Salir de la misión: pausa el cronómetro mientras se confirma
+    const exitM = $('#exit-modal');
+    const closeExit = () => {
+      if (exitM.classList.contains('hidden')) return;
+      exitM.classList.add('hidden');
+      if (this._exitWasRunning) this.running = true;
+      this._exitWasRunning = false;
+    };
+    $('#btn-exit').addEventListener('click', () => {
+      if (!exitM.classList.contains('hidden')) return;
+      audio.click();
+      this._exitWasRunning = this.running;
+      this.running = false;
+      exitM.classList.remove('hidden');
+      $('#btn-exit-cancel').focus();
+    });
+    $('#btn-exit-cancel').addEventListener('click', () => { audio.click(); closeExit(); });
+    $('#btn-exit-confirm').addEventListener('click', () => location.reload());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !exitM.classList.contains('hidden')) { e.stopImmediatePropagation(); closeExit(); }
+    }, true);
+
     $('#btn-stage2').addEventListener('click', () => this.beginStage2());
     $('#btn-cert').addEventListener('click', () => this.downloadCert());
     $('#btn-replay').addEventListener('click', () => location.reload());

@@ -109,6 +109,11 @@ body.cinema #hud, body.cinema #hint-bar { opacity: 0; pointer-events: none; }
 }
 .hud-btn:hover, .hud-btn[aria-expanded="true"] { background: rgba(61, 232, 255, 0.14); border-color: var(--cyan); }
 .hud-btn span { color: var(--cyan); }
+.hud-btn.hud-exit span { color: var(--red); }
+.hud-btn.hud-exit:hover { background: rgba(255, 59, 78, 0.14); border-color: var(--red); }
+#exit-modal { z-index: 90; }
+.exit-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 18px; }
+.btn.ghost.danger:hover { color: var(--red); border-color: var(--red); }
 body.stage-2 { --accent: var(--amber); }
 
 /* ---------- Bitácora ---------- */

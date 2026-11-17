@@ -55,8 +55,24 @@
       <button class="hud-btn" id="btn-view" title="Vista panorámica 360°"><span>⟳</span> Vista 360°</button>
       <button class="hud-btn" id="btn-audio" title="Silenciar audio" aria-pressed="false"><span id="audio-icon">🔊</span></button>
       <button class="hud-btn" id="btn-log" aria-expanded="false"><span>▤</span> Bitácora de Claves</button>
+      <button class="hud-btn hud-exit" id="btn-exit" title="Salir de la misión"><span>⏻</span> Salir</button>
     </div>
   </header>
+
+  <!-- CONFIRMACIÓN DE SALIDA -->
+  <section id="exit-modal" class="overlay hidden" role="dialog" aria-labelledby="exit-title">
+    <div class="welcome-card glass narrow">
+      <p class="eyebrow t-red">MISIÓN EN PAUSA</p>
+      <h2 id="exit-title">¿SALIR DE LA MISIÓN?</h2>
+      <div class="briefing">
+        <p>El cronómetro está detenido. Si sales, <b>se pierde el avance</b> de esta partida y vuelves a la pantalla de inicio.</p>
+      </div>
+      <div class="exit-actions">
+        <button class="btn primary" id="btn-exit-cancel">Seguir jugando</button>
+        <button class="btn ghost danger" id="btn-exit-confirm">Salir al inicio</button>
+      </div>
+    </div>
+  </section>
 
   <!-- BITÁCORA DE CLAVES -->
   <aside id="logbook" class="glass" hidden>
